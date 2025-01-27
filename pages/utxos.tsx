@@ -3,6 +3,9 @@ import { WalletContext } from '../utils/WalletContext';
 import { initKoios, signAndSubmit } from '../utils/meshUtils';
 import { MeshTxBuilder } from '@meshsdk/core';
 import { useEscrow } from '@/utils/EscrowContext';
+import { Table, Tooltip, IconButton } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
+import WithdrawIcon from '@mui/icons-material/AccountBalanceWallet';
 
 export default function UtxosPage() {
   const { connected, wallet, connectedAddress } = useContext(WalletContext);
@@ -73,21 +76,37 @@ export default function UtxosPage() {
     <div style={{ margin: '20px' }}>
       <h1>UTXOs Page</h1>
       <button onClick={fetchUtxos}>Refresh</button>
-      <ul>
-        {utxos.map((utxo, index) => (
-          <li key={index}>
-            <p>TxHash: {utxo.input.txHash}</p>
-            <p>OutputIndex: {utxo.input.outputIndex}</p>
-            <p>Amount: {utxo.output.amount.map((a: any) => `${a.quantity} ${a.unit}`).join(', ')}</p>
-            <button onClick={() => handleAction(utxo, 'cancel')} disabled={loading}>
-              {loading ? 'Cancelling...' : 'Cancel'}
-            </button>
-            <button onClick={() => handleAction(utxo, 'withdraw')} disabled={loading}>
-              {loading ? 'Withdrawing...' : 'Withdraw'}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <Table>
+        <thead>
+          <tr>
+            <th>TxHash</th>
+            <th>OutputIndex</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {utxos.map((utxo, index) => (
+            <tr key={index}>
+              <td>{utxo.input.txHash}</td>
+              <td>{utxo.input.outputIndex}</td>
+              <td>{utxo.output.amount.map((a: any) => `${a.quantity} ${a.unit}`).join(', ')}</td>
+              <td>
+                <Tooltip title="Cancel">
+                  <IconButton onClick={() => handleAction(utxo, 'cancel')} disabled={loading}>
+                    <CancelIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Withdraw">
+                  <IconButton onClick={() => handleAction(utxo, 'withdraw')} disabled={loading}>
+                    <WithdrawIcon />
+                  </IconButton>
+                </Tooltip>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </div>
   );
 }
