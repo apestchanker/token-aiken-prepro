@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useContext } from 'react';
 import { WalletContext } from '../utils/WalletContext';
 import { initKoios, signAndSubmit } from '../utils/meshUtils';
@@ -49,13 +50,13 @@ export default function UtxosPage() {
           constructor: 1, // CancelTrade
           fields: [],
         };
-        txBuilder.redeemer(redeemerData);
+        txBuilder.addRedeemer(redeemerData); // Corrected method name
       } else if (action === 'withdraw') {
         const redeemerData = {
           constructor: 2, // Withdraw
           fields: [],
         };
-        txBuilder.redeemer(redeemerData);
+        txBuilder.addRedeemer(redeemerData); // Corrected method name
       }
 
       txBuilder.changeAddress(connectedAddress);
