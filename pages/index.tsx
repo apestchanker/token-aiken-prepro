@@ -1,5 +1,3 @@
-// pages/index.tsx
-
 import React, { useContext } from 'react';
 import { WalletContext } from '../utils/WalletContext';
 import { CardanoWallet } from "@meshsdk/react";
@@ -28,6 +26,7 @@ export default function Home() {
             <li><Link href="/activate">Activate Escrow</Link></li>
             <li><Link href="/cancel">Cancel Escrow</Link></li>
             <li><Link href="/complete">Complete Escrow</Link></li>
+            <li><Link href="/utxos">View UTXOs</Link></li>
           </ul>
         </>
       )}
