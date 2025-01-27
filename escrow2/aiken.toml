@@ -1,0 +1,29 @@
+name = "alex/escrow"
+version = "0.0.1"
+compiler = "v1.1.9"
+plutus = "v3"
+license = "Apache-2.0"
+description = "Aiken contracts for project 'alex/escrow'"
+
+[build]
+source_dir = "."                # The root directory for your project
+validators_dir = "validators"   # Where your validator scripts are located
+modules_dir = "modules"         # Where reusable modules are stored
+output_dir = "build"            # Where compiled artifacts will be saved
+
+[repository]
+user = "alex"
+project = "escrow"
+platform = "github"
+
+[[dependencies]]
+name = "aiken-lang/stdlib"
+version = "v2.2.0"
+source = "github"
+
+[[dependencies]]
+name = "sidan-lab/vodka"
+version = "0.1.9"
+source = "github"
+
+[config]

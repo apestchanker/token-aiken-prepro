@@ -1,0 +1,123 @@
+use cardano/address.{Address}
+use cardano/assets.{AssetName, PolicyId}
+use escrow.{
+  ActiveEscrow, CancelTrade, CompleteTrade, EscrowDatum, Initiation, MValue,
+  RecipientDeposit,
+}
+use mocktail.{
+  complete, mocktail_tx, required_signer_hash, tx_in, tx_in_inline_datum, tx_out,
+  tx_out_inline_datum,
+}
+use mocktail/virgin_address.{mock_pub_key_address, mock_script_address}
+use mocktail/virgin_key_hash.{mock_pub_key_hash}
+use mocktail/virgin_output_reference.{mock_tx_hash, mock_utxo_ref}
+
+type TestCase {
+  initiator_signed: Bool,
+  recipient_signed: Bool,
+  value_sent: Bool,
+}
+
+fn test_lovelace() -> MValue {
+  [(PolicyId.new(""), (AssetName.new(""), 2_000_000))]
+}
+
+fn test_token() -> MValue {
+  [(PolicyId.new("test"), (AssetName.new("test"), 1))]
+}
+
+fn initiator_address() -> Address {
+  mock_pub_key_address(0, None)
+}
+
+fn recipient_address() -> Address {
+  mock_pub_key_address(1, None)
+}
+
+fn initiation_datum() -> EscrowDatum {
+  Initiation {
+    initiator: initiator_address(),
+    initiator_assets: test_lovelace(),
+  }
+}
+
+fn active_datum(recipient: Address, recipient_assets: MValue) -> EscrowDatum {
+  ActiveEscrow {
+    initiator: initiator_address(),
+    initiator_assets: test_lovelace(),
+    recipient,
+    recipient_assets,
+  }
+}
+
+test success_escrow_initiation() {
+  let output_reference = mock_utxo_ref(0, 1)
+  let datum = Some(initiation_datum())
+  let redeemer =
+    RecipientDeposit {
+      recipient: recipient_address(),
+      recipient_assets: test_token(),
+    }
+
+  let tx =
+    mocktail_tx()
+      |> tx_in(
+          True,
+          mock_tx_hash(0),
+          1,
+          test_lovelace(),
+          mock_script_address(0, None),
+        )
+      |> tx_in_inline_datum(True, initiation_datum())
+      |> tx_out(True, mock_script_address(0, None), test_lovelace())
+      |> tx_out_inline_datum(True, active_datum(recipient_address(), test_token()))
+      |> complete()
+
+  escrow.spend(datum, redeemer, output_reference, tx)
+}
+
+test success_escrow_completion() {
+  let output_reference = mock_utxo_ref(0, 1)
+  let datum = Some(active_datum(recipient_address(), test_token()))
+  let redeemer = CompleteTrade
+
+  let tx =
+    mocktail_tx()
+      |> required_signer_hash(True, mock_pub_key_hash(0))
+      |> required_signer_hash(True, mock_pub_key_hash(1))
+      |> tx_in(
+          True,
+          mock_tx_hash(0),
+          1,
+          test_lovelace() |> add(test_token()),
+          mock_script_address(0, None),
+        )
+      |> tx_in_inline_datum(True, datum)
+      |> tx_out(True, initiator_address(), test_token())
+      |> tx_out(True, recipient_address(), test_lovelace())
+      |> complete()
+
+  escrow.spend(datum, redeemer, output_reference, tx)
+}
+
+test fail_escrow_completion_without_signatures() {
+  let output_reference = mock_utxo_ref(0, 1)
+  let datum = Some(active_datum(recipient_address(), test_token()))
+  let redeemer = CompleteTrade
+
+  let tx =
+    mocktail_tx()
+      |> tx_in(
+          True,
+          mock_tx_hash(0),
+          1,
+          test_lovelace() |> add(test_token()),
+          mock_script_address(0, None),
+        )
+      |> tx_in_inline_datum(True, datum)
+      |> tx_out(True, initiator_address(), test_token())
+      |> tx_out(True, recipient_address(), test_lovelace())
+      |> complete()
+
+  !escrow.spend(datum, redeemer, output_reference, tx)
+}
